@@ -1,0 +1,12 @@
+{
+  "name": "pdf-to-claude",
+  "version": "1.0.0",
+  "description": "Simple Chrome extension for uploading PDFs to Claude.ai",
+  "main": "background.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "zip -r -j pdf-upload-extension.zip src/* manifest.json"
+  },
+  "author": "anthony@acrognale.com",
+  "license": "MIT"
+}

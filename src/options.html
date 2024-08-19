@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PDF to Claude Settings</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label { display: block; margin-bottom: 10px; }
+    input[type="text"] { width: 300px; }
+  </style>
+</head>
+<body>
+  <h1>PDF to Claude Settings</h1>
+  <label>
+    <input type="checkbox" id="logging-enabled"> Enable Logging
+  </label>
+  <label>
+    Default Prompt:
+    <input type="text" id="default-prompt">
+  </label>
+  <button id="save">Save</button>
+  <div id="status"></div>
+  <script src="options.js"></script>
+</body>
+</html>
