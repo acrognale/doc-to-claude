@@ -28,5 +28,17 @@ function restoreOptions() {
   );
 }
 
+// Initialize default settings when the extension is installed
+chrome.runtime.onInstalled.addListener(function (details) {
+  if (details.reason === "install") {
+    chrome.storage.sync.set(
+      { loggingEnabled: false, defaultPrompt: "Summarize this document" },
+      function () {
+        console.log("Default settings initialized");
+      }
+    );
+  }
+});
+
 document.addEventListener("DOMContentLoaded", restoreOptions);
 document.getElementById("save").addEventListener("click", saveOptions);

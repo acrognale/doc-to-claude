@@ -6,13 +6,25 @@ chrome.action.onClicked.addListener((tab) => {
     return;
   }
 
-  chrome.tabs.sendMessage(tab.id, { action: "getPDFUrl" }, function (response) {
-    if (response && response.pdfUrl) {
-      chrome.storage.local.set({ pdfUrl: response.pdfUrl }, function () {
-        chrome.tabs.update(tab.id, { url: TARGET_URL });
-      });
-    } else {
-      console.log("No PDF detected on this page");
-    }
-  });
+  chrome.tabs.sendMessage(tab.id, { action: "start" });
+});
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "navigateToClaudeAI") {
+    chrome.tabs.update(
+      sender.tab.id,
+      { url: TARGET_URL },
+      function (updatedTab) {
+        chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+          if (tabId === updatedTab.id && info.status === "complete") {
+            chrome.tabs.onUpdated.removeListener(listener);
+            chrome.tabs.sendMessage(tabId, {
+              action: "uploadPDF",
+              pdfUrl: request.pdfUrl,
+            });
+          }
+        });
+      }
+    );
+  }
 });

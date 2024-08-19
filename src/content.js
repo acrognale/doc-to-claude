@@ -2,14 +2,12 @@ const TARGET_URL = "https://claude.ai/new";
 const MAX_RETRIES = 50;
 const RETRY_INTERVAL = 100;
 
-// Update these constants to use settings
-let LOGGING_ENABLED = true;
-let PROMPT_TEXT = "Summarize this document";
-
 function log(message) {
-  if (LOGGING_ENABLED) {
-    console.log(`[pdf-to-claude] ${message}`);
-  }
+  chrome.storage.sync.get({ loggingEnabled: true }, function (items) {
+    if (items.loggingEnabled) {
+      console.log(`[pdf-to-claude] ${message}`);
+    }
+  });
 }
 
 function getCurrentPDFUrl() {
@@ -19,23 +17,33 @@ function getCurrentPDFUrl() {
   return isPDF ? window.location.href : null;
 }
 
-function simulateFileUpload(url, inputElement) {
+async function performUpload(url, inputElement) {
   log(`Simulating file upload with URL: ${url}`);
-  const file = new File([""], "document.pdf", { type: "application/pdf" });
-  Object.defineProperty(file, "path", {
-    value: url,
-    writable: false,
-  });
 
-  const dataTransfer = new DataTransfer();
-  dataTransfer.items.add(file);
-  inputElement.files = dataTransfer.files;
+  try {
+    // Fetch the PDF content
+    const response = await fetch(url);
+    const pdfContent = await response.arrayBuffer();
 
-  log("Dispatching change event");
-  inputElement.dispatchEvent(new Event("change", { bubbles: true }));
-  log("Dispatching input event");
-  inputElement.dispatchEvent(new Event("input", { bubbles: true }));
-  log("File upload simulation complete");
+    // Create a File object with the actual PDF content
+    const file = new File([pdfContent], "document.pdf", {
+      type: "application/pdf",
+    });
+
+    // Create a DataTransfer object and add the file
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    inputElement.files = dataTransfer.files;
+
+    log("Dispatching change event");
+    inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+    log("Dispatching input event");
+    inputElement.dispatchEvent(new Event("input", { bubbles: true }));
+    log("File upload simulation complete");
+  } catch (error) {
+    log(`Error simulating file upload: ${error.message}`);
+    throw error;
+  }
 }
 
 function waitForElement(selector, maxRetries = MAX_RETRIES) {
@@ -58,9 +66,9 @@ function waitForElement(selector, maxRetries = MAX_RETRIES) {
   });
 }
 
-function setPromptText(promptElement) {
+function setPromptText(promptElement, promptText) {
   log("Setting prompt text");
-  promptElement.textContent = PROMPT_TEXT;
+  promptElement.textContent = promptText;
   promptElement.dispatchEvent(new Event("input", { bubbles: true }));
   log("Prompt text set and input event dispatched");
 }
@@ -101,21 +109,23 @@ function waitForElementRemoval(element, maxRetries = MAX_RETRIES) {
   });
 }
 
-async function checkAndUpload() {
+async function checkAndUpload(pdfUrl) {
   log("Starting checkAndUpload function");
-  if (window.location.href.includes(TARGET_URL)) {
-    chrome.storage.sync.get(
-      ["pdfUrl", "loggingEnabled", "defaultPrompt"],
-      async function (result) {
-        if (!result.pdfUrl) {
-          return;
-        }
+  chrome.storage.sync.get(
+    {
+      loggingEnabled: true,
+      defaultPrompt: "Summarize this document",
+    },
+    async function (result) {
+      if (!pdfUrl) {
+        log("No PDF URL provided");
+        return;
+      }
 
-        LOGGING_ENABLED =
-          result.loggingEnabled !== undefined ? result.loggingEnabled : true;
-        PROMPT_TEXT = result.defaultPrompt || PROMPT_TEXT;
+      log("On target page with provided PDF URL");
+      showToast("Loading PDF...", false); // Show loading toast
 
-        log("On target page with stored PDF URL");
+      try {
         const inputElement = await waitForElement(
           'input[data-testid="file-upload"]'
         );
@@ -124,25 +134,73 @@ async function checkAndUpload() {
 
         log("Upload input element found");
 
-        simulateFileUpload(result.pdfUrl, inputElement);
+        await performUpload(pdfUrl, inputElement);
         log("Upload simulation completed");
 
         const promptElement = await waitForElement(
           'div[aria-label="Write your prompt to Claude"] > div'
         );
         log("Prompt input element found");
-        setPromptText(promptElement);
-        chrome.storage.local.remove("pdfUrl");
+        setPromptText(promptElement, result.defaultPrompt);
+
+        showToast("PDF loaded successfully!", false); // Show success toast
+      } catch (error) {
+        log(`Error in checkAndUpload: ${error.message}`);
+        showToast("Error loading PDF. Please try again.", false); // Show error toast
       }
-    );
+    }
+  );
+}
+
+// Update showToast function to support persistent toasts
+function showToast(message, persistent = false) {
+  const toast = document.createElement("div");
+  toast.textContent = message;
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+  `;
+  document.body.appendChild(toast);
+
+  // Trigger reflow to enable transition
+  toast.offsetHeight;
+
+  toast.style.opacity = "1";
+
+  if (!persistent) {
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(() => {
+        document.body.removeChild(toast);
+      }, 300);
+    }, 3000);
   }
+
+  return toast; // Return the toast element for persistent toasts
 }
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.action === "getPDFUrl") {
-    sendResponse({ pdfUrl: getCurrentPDFUrl() });
+  if (request.action === "start") {
+    const pdfUrl = getCurrentPDFUrl();
+    if (!pdfUrl) {
+      showToast(
+        "This page is not a PDF. The extension works only with PDF documents."
+      );
+      return;
+    }
+    chrome.runtime.sendMessage({
+      action: "navigateToClaudeAI",
+      pdfUrl: pdfUrl,
+    });
+  } else if (request.action === "uploadPDF") {
+    checkAndUpload(request.pdfUrl);
   }
 });
-
-// Run checkAndUpload on every page load
-checkAndUpload();

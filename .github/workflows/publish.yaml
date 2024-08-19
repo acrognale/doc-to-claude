@@ -15,7 +15,7 @@ jobs:
 
       - name: Build
         run: |-
-          zip -r pdf-to-claude-${{ github.ref_name }}.zip dist
+          zip -r -j pdf-to-claude-${{ github.ref_name }}.zip src/*
 
       - name: Create Release
         id: create_release
@@ -24,7 +24,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          release_name: ${{ github.ref }}
           draft: false
           prerelease: false
 
