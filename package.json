@@ -1,12 +1,17 @@
 {
-  "name": "pdf-to-claude",
+  "name": "doc-to-claude",
   "version": "1.0.0",
-  "description": "Simple Chrome extension for uploading PDFs to Claude.ai",
+  "description": "Simple browser extension for uploading documents to Claude.ai",
   "main": "background.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "package": "zip -r -j pdf-upload-extension.zip src/*"
+    "package:chrome": "zip -r -j doc-to-claude-chrome.zip src/* chrome/manifest.json",
+    "package:firefox": "temp_dir=$(mktemp -d) && cp -R src/* firefox/* \"$temp_dir\" && web-ext build --source-dir \"$temp_dir\" --artifacts-dir dist --overwrite-dest && rm -rf \"$temp_dir\"",
+    "run:firefox": "temp_dir=$(mktemp -d) && cp -R src/* firefox/* \"$temp_dir\" && web-ext run --source-dir \"$temp_dir\" --artifacts-dir dist && rm -rf \"$temp_dir\""
   },
   "author": "anthony@acrognale.com",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "web-ext": "^8.2.0"
+  }
 }
