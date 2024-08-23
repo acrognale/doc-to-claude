@@ -5,7 +5,7 @@
   "main": "background.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "package:chrome": "zip -r -j doc-to-claude-chrome.zip src/* chrome/manifest.json",
+    "package:chrome": "zip -r -j doc-to-claude-chrome.zip src/*",
     "package:firefox": "temp_dir=$(mktemp -d) && cp -R src/* firefox/* \"$temp_dir\" && web-ext build --source-dir \"$temp_dir\" --artifacts-dir dist --overwrite-dest && rm -rf \"$temp_dir\"",
     "run:firefox": "temp_dir=$(mktemp -d) && cp -R src/* firefox/* \"$temp_dir\" && web-ext run --source-dir \"$temp_dir\" --artifacts-dir dist && rm -rf \"$temp_dir\""
   },

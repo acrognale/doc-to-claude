@@ -76,7 +76,7 @@ function setPromptText(promptElement, promptText) {
 function clearExistingDocuments() {
   log("Clearing existing documents");
   const thumbnails = document.querySelectorAll(
-    '[data-testid="file-thumbnail"]'
+    '[data-testid="file-thumbnail"]',
   );
   log(`Found ${thumbnails.length} thumbnails`);
   const removePromises = Array.from(thumbnails).map((thumbnail) => {
@@ -127,7 +127,7 @@ async function checkAndUpload(pdfUrl) {
 
       try {
         const inputElement = await waitForElement(
-          'input[data-testid="file-upload"]'
+          'input[data-testid="file-upload"]',
         );
 
         await clearExistingDocuments();
@@ -138,7 +138,7 @@ async function checkAndUpload(pdfUrl) {
         log("Upload simulation completed");
 
         const promptElement = await waitForElement(
-          'div[aria-label="Write your prompt to Claude"] > div'
+          'div[aria-label="Write your prompt to Claude"] > div',
         );
         log("Prompt input element found");
         setPromptText(promptElement, result.defaultPrompt);
@@ -148,7 +148,7 @@ async function checkAndUpload(pdfUrl) {
         log(`Error in checkAndUpload: ${error.message}`);
         showToast("Error loading PDF. Please try again.", false); // Show error toast
       }
-    }
+    },
   );
 }
 
@@ -192,7 +192,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     const pdfUrl = getCurrentPDFUrl();
     if (!pdfUrl) {
       showToast(
-        "This page is not a PDF. The extension works only with PDF documents."
+        "This page is not a PDF. The extension works only with PDF documents.",
       );
       return;
     }
@@ -204,3 +204,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     checkAndUpload(request.pdfUrl);
   }
 });
+
+chrome.runtime.sendMessage(
+  { action: "contentScriptReady" },
+  function (response) {
+    console.log("Content script initialized");
+  },
+);

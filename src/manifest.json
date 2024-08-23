@@ -3,7 +3,7 @@
   "name": "Doc to Claude",
   "version": "1.0",
   "description": "Add a document to Claude without downloading it and uploading it",
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "scripting"],
   "action": {
     "default_title": "Doc to Claude"
   },
@@ -16,11 +16,5 @@
   "background": {
     "service_worker": "background.js"
   },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"]
-    }
-  ],
   "options_page": "options.html"
 }
