@@ -1,17 +1,23 @@
 {
   "name": "doc-to-claude",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple browser extension for uploading documents to Claude.ai",
   "main": "background.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "package:chrome": "zip -r -j doc-to-claude-chrome.zip src/*",
-    "package:firefox": "temp_dir=$(mktemp -d) && cp -R src/* firefox/* \"$temp_dir\" && web-ext build --source-dir \"$temp_dir\" --artifacts-dir dist --overwrite-dest && rm -rf \"$temp_dir\"",
-    "run:firefox": "temp_dir=$(mktemp -d) && cp -R src/* firefox/* \"$temp_dir\" && web-ext run --source-dir \"$temp_dir\" --artifacts-dir dist && rm -rf \"$temp_dir\""
+    "build": "vite build",
+    "zip": "cd dist && zip -r ../doc-to-claude-chrome.zip . -x \"*.DS_Store\"",
+    "lint": "biome check src/"
   },
   "author": "anthony@acrognale.com",
   "license": "MIT",
   "devDependencies": {
+    "@biomejs/biome": "^1.8.3",
+    "@crxjs/vite-plugin": "2.0.0-beta.25",
+    "@types/chrome": "^0.0.270",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
     "web-ext": "^8.2.0"
   }
 }

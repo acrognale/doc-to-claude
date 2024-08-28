@@ -13,9 +13,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+      
+      - name: Install dependencies
+        run: |-
+          npm ci
+
       - name: Build
         run: |-
-          zip -r -j pdf-to-claude-${{ github.ref_name }}.zip src/*
+          npm run build
+          npm run zip
+          mv doc-to-claude-chrome.zip pdf-to-claude-${{ github.ref_name }}.zip
 
       - name: Create Release
         id: create_release
