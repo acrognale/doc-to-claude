@@ -2,10 +2,12 @@ export type EventTypes =
 	| "navigateToClaudeAI"
 	| "contentScriptReady"
 	| "uploadPDF"
-	| "start";
+	| "start"
+	| "fetchPDF";
 
 export type Event =
 	| { action: "navigateToClaudeAI"; pdfUrl: string }
 	| { action: "contentScriptReady"; status?: "acknowledged" }
 	| { action: "uploadPDF"; pdfUrl: string }
-	| { action: "start" };
+	| { action: "start" }
+	| { action: "fetchPDF"; pdfUrl: string };

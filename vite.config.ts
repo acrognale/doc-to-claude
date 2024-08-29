@@ -1,6 +1,6 @@
 import { resolve } from "path";
+import { type ManifestV3Export, crx } from "@crxjs/vite-plugin";
 import { defineConfig } from "vite";
-import { crx, type ManifestV3Export } from "@crxjs/vite-plugin";
 
 import manifest from "./manifest.json";
 import pkg from "./package.json";

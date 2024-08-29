@@ -36,18 +36,47 @@ chrome.runtime.onMessage.addListener(
 	(
 		request: Event,
 		sender: chrome.runtime.MessageSender,
+		sendResponse: (response?: any) => void,
 	) => {
 		console.log("Received message:", JSON.stringify(request));
 		if (request.action === "navigateToClaudeAI" && sender.tab?.id) {
 			handleNavigateToClaudeAI(sender.tab.id, request.pdfUrl);
 		} else if (request.action === "contentScriptReady" && sender.tab?.id) {
 			contentScriptStatus[sender.tab.id] = true;
+		} else if (request.action === "fetchPDF") {
+			fetchPDF(request.pdfUrl)
+				.then((pdfArrayBuffer) => {
+					sendResponse({ pdfArrayBuffer });
+				})
+				.catch((error) => {
+					console.error("Error fetching PDF:", error);
+					sendResponse({ error: "Failed to fetch PDF" });
+				});
+			return true; // Indicates that the response is sent asynchronously
 		}
 	},
 );
 
+async function fetchPDF(url: string): Promise<string> {
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+	const blob = await response.blob();
+	const reader = new FileReader();
+	reader.readAsDataURL(blob);
+	const base64data = await new Promise<string>((resolve) => {
+		reader.onloadend = () => {
+			const base64data = reader.result;
+			resolve(base64data as string);
+		};
+	});
+
+	return base64data;
+}
+
 async function handleNavigateToClaudeAI(tabId: number, pdfUrl: string) {
-  console.log('calling handleNavigateToClaudeAI')
+	console.log("calling handleNavigateToClaudeAI");
 	const updatedTab = await chrome.tabs.update(tabId, { url: TARGET_URL });
 	contentScriptStatus[tabId] = false;
 

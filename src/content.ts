@@ -29,8 +29,22 @@ async function performUpload(
 	log(`Simulating file upload with URL: ${url}`);
 
 	try {
-		const response = await fetch(url);
-		const pdfContent = await response.arrayBuffer();
+		const response: { pdfArrayBuffer: string } | { error: string } =
+			await new Promise((resolve) => {
+				chrome.runtime.sendMessage(
+					{ action: "fetchPDF", pdfUrl: url },
+					(response) => {
+						resolve(response);
+					},
+				);
+			});
+
+		if ("error" in response) {
+			throw new Error(response.error);
+		}
+
+		const pdfResponse = await fetch(response.pdfArrayBuffer);
+		const pdfContent = await pdfResponse.blob();
 
 		const file = new File([pdfContent], "document.pdf", {
 			type: "application/pdf",
@@ -215,8 +229,10 @@ chrome.runtime.onMessage.addListener((request: Event) => {
 	}
 });
 
-setTimeout(() => {
+try {
 	chrome.runtime.sendMessage({ action: "contentScriptReady" }, () => {
 		log("Content script initialized");
 	});
-}, 100);
+} catch (error) {
+	log(`Error initializing content script: ${(error as Error).message}`);
+}
